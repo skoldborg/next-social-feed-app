@@ -2,7 +2,13 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [new URL('http://placebeard.it/**')],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'placebeard.it',
+        pathname: '/**', // Allow all paths
+      },
+    ],
   },
 }
 
