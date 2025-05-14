@@ -24,8 +24,6 @@ export const PostForm = () => {
     try {
       await dispatch(addPost(formData))
 
-      // Handle successful submission
-      console.log('success')
       return {
         success: true,
         message: '',
@@ -41,12 +39,16 @@ export const PostForm = () => {
   }, initialState)
 
   const inputClasses =
-    'flex h-10 w-full  bg-white text-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50'
+    'flex h-10 w-full  bg-white text-zinc-800 text-sm disabled:cursor-not-allowed disabled:opacity-50'
   const textareaClasses =
-    'flex min-h-[80px] w-full bg-white text-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50'
+    'flex min-h-[80px] w-full bg-white text-zinc-800 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50'
 
   return (
-    <Form action={formAction} className="p-2" formEncType="multipart/form-data">
+    <Form
+      action={formAction}
+      className="p-2 max-w-xs"
+      formEncType="multipart/form-data"
+    >
       <div className="mb-4">
         <label className="block text-sm font-bold mb-2">Your name</label>
         <input
@@ -82,13 +84,21 @@ export const PostForm = () => {
           )}
         />
       </div>
-      <button
-        disabled={isPending}
-        type="submit"
-        className="bg-gray-300 text-zinc-800 px-4 py-2"
-      >
-        Submit
-      </button>
+      <div className="flex gap-2">
+        <button
+          disabled={isPending}
+          type="submit"
+          className="bg-gray-300 text-zinc-800 px-4 py-2"
+        >
+          Submit
+        </button>
+
+        {!state.success && state.message && (
+          <div className="flex items-center">
+            <p className="text-sm text-wrap text-red-500">{state.message}</p>
+          </div>
+        )}
+      </div>
     </Form>
   )
 }
