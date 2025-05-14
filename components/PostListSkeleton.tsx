@@ -1,6 +1,6 @@
 export const PostListSkeleton = () => {
   return (
-    <div>
+    <div data-testid="post-list-skeleton">
       {Array.from({ length: 10 }).map((_, index) => (
         <div
           className="rounded-lg border border-gray-200 bg-gray-200 text-zinc-800 shadow-sm mb-2 transition-transform"
