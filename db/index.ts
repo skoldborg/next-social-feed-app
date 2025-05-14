@@ -14,7 +14,7 @@ export const getDb = async () => {
 
 export const addPost = async (post: Post) => {
   const db = await getDb()
-  db.data.posts.push(post)
+  db.data.posts.unshift(post)
   await db.write()
 }
 

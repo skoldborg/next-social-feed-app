@@ -27,6 +27,7 @@ export const addPost = createAsyncThunk(
   'posts/addPost',
   async (formData: FormData) => {
     const response = await addPostAction(formData)
+
     if (!response.success || !response.post) {
       throw new Error(response.message)
     }

@@ -8,7 +8,7 @@ import { z } from 'zod'
 const PostSchema = z.object({
   author: z.string().min(3, 'Author is required'),
   content: z.string().min(1, 'Content is required'),
-  avatar: z.string().optional(),
+  avatar: z.instanceof(File).optional(),
 })
 
 export type ActionResponse = {
@@ -43,6 +43,7 @@ export async function addPostAction(
       content,
       avatar: avatarFile,
     })
+
     if (!validationResult.success) {
       return {
         success: false,
@@ -51,15 +52,15 @@ export async function addPostAction(
       }
     }
 
+    // Base64 used for simplicity
+    // In a real-world application, I'd upload the file to a server or cloud storage
+    // and store the URL instead of the Base64 string
     let avatarBase64: string | undefined = undefined
     // Convert the avatar image to a Base64 string
-    if (avatarFile) {
-      avatarBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(avatarFile)
-      })
+    if (avatarFile && avatarFile.size > 0) {
+      const arrayBuffer = await avatarFile.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
+      avatarBase64 = `data:${avatarFile.type};base64,${base64}`
     }
 
     const post = {
