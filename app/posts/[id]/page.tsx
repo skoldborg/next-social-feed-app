@@ -8,7 +8,8 @@ export default async function SinglePost({
 }: {
   params: { id: string }
 }) {
-  const post = await getSinglePostAction(params.id)
+  const { id } = await params
+  const post = await getSinglePostAction(id)
 
   if (!post) {
     notFound()
@@ -37,7 +38,7 @@ export default async function SinglePost({
           )}
         </figure>
         <div className="flex flex-col justify-center w-full">
-          <h1 className="font-bold text-2xl text-slate-700">{author}</h1>
+          <h1 className="font-bold text-2xl text-slate-700 mb-2">{author}</h1>
           <p className="text-slate-500 text-sm">{content}</p>
         </div>
       </div>

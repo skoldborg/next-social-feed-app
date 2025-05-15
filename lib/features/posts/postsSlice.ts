@@ -39,7 +39,11 @@ export const addPost = createAsyncThunk(
 const postsSlice = createSlice({
   name: 'posts',
   initialState,
-  reducers: {},
+  reducers: {
+    addNewPost: (state, action: PayloadAction<Post>) => {
+      state.posts.unshift(action.payload) // Add the new post to the top
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Handle fetchPosts
@@ -74,4 +78,5 @@ const postsSlice = createSlice({
   },
 })
 
+export const { addNewPost } = postsSlice.actions
 export default postsSlice.reducer
