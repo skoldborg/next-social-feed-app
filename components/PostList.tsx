@@ -30,7 +30,7 @@ export const PostList = () => {
     <ul>
       {posts.map((post) => (
         <li key={post.id}>
-          <Link href="">
+          <Link href={`/posts/${post.id}`}>
             <PostCard {...post} />
           </Link>
         </li>

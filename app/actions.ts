@@ -1,6 +1,6 @@
 'use server'
 
-import { addPost, getPosts } from '@/db/index'
+import { addPost, getPosts, getSinglePost } from '@/db/index'
 import { Post } from '@/lib/types'
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
@@ -26,6 +26,16 @@ export async function getPostsAction() {
   } catch (error) {
     console.error('Failed to fetch posts:', error)
     throw new Error('Failed to fetch posts')
+  }
+}
+
+export async function getSinglePostAction(id: string) {
+  try {
+    const post = await getSinglePost(id)
+    return post
+  } catch (error) {
+    console.error('Failed to fetch post:', error)
+    throw new Error('Failed to fetch post')
   }
 }
 

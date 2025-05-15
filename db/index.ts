@@ -23,3 +23,14 @@ export const getPosts = async () => {
 
   return db.data.posts
 }
+
+export const getSinglePost = async (id: string) => {
+  const db = await getDb()
+  const post = db.data.posts.find((post) => post.id === id)
+
+  if (!post) {
+    return null
+  }
+
+  return post
+}

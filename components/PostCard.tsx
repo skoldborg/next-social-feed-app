@@ -9,8 +9,8 @@ export const PostCard = ({ author, avatar, content }: Post) => {
           {avatar ? (
             <Image
               src={avatar}
-              width={150}
-              height={150}
+              width={80}
+              height={80}
               alt={`${author}'s avatar`}
             />
           ) : (
