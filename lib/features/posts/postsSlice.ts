@@ -1,6 +1,7 @@
 import { addPostAction, getPostsAction } from '@/app/actions'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+import { socket } from '@/lib/socket'
 import { Post } from '@/lib/types'
 
 export type PostsState = {
@@ -62,6 +63,9 @@ const postsSlice = createSlice({
       .addCase(addPost.fulfilled, (state, action: PayloadAction<Post>) => {
         state.loading = false
         state.posts.unshift(action.payload) // Add the new post to the top
+
+        // Emit event to notify that a new post has been added
+        socket.emit('new post', action.payload)
       })
       .addCase(addPost.rejected, (state, action) => {
         state.loading = false
