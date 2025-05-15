@@ -18,10 +18,10 @@ export const addPost = async (post: Post) => {
   await db.write()
 }
 
-export const getPosts = async () => {
+export const getPosts = async (offset: number, limit: number) => {
   const db = await getDb()
 
-  return db.data.posts
+  return db.data.posts.slice(offset, offset + limit)
 }
 
 export const getSinglePost = async (id: string) => {

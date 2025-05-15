@@ -4,3 +4,8 @@ export type Post = {
   author: string
   avatar?: string
 }
+
+export type Pagination = {
+  page: number
+  limit: number
+}

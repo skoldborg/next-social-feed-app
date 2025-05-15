@@ -1,7 +1,7 @@
 'use server'
 
 import { addPost, getPosts, getSinglePost } from '@/db/index'
-import { Post } from '@/lib/types'
+import { Pagination, Post } from '@/lib/types'
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
 
@@ -19,9 +19,10 @@ export type ActionResponse = {
   error?: string
 }
 
-export async function getPostsAction() {
+export async function getPostsAction({ page, limit }: Pagination) {
   try {
-    const posts = await getPosts()
+    const offset = (page - 1) * limit
+    const posts = await getPosts(offset, limit)
     return posts
   } catch (error) {
     console.error('Failed to fetch posts:', error)

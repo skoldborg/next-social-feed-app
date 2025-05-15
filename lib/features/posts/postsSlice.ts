@@ -2,7 +2,7 @@ import { addPostAction, getPostsAction } from '@/app/actions'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 import { socket } from '@/lib/socket'
-import { Post } from '@/lib/types'
+import { Pagination, Post } from '@/lib/types'
 
 export type PostsState = {
   posts: Post[]
@@ -18,10 +18,13 @@ const initialState: PostsState = {
 }
 
 // Async thunk for fetching posts
-export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
-  const posts = await getPostsAction()
-  return posts
-})
+export const fetchPosts = createAsyncThunk<Post[], Pagination>(
+  'posts/fetchPosts',
+  async ({ page, limit }) => {
+    const posts = await getPostsAction({ page, limit })
+    return posts
+  }
+)
 
 // Async thunk for adding a post
 export const addPost = createAsyncThunk(
@@ -51,9 +54,9 @@ const postsSlice = createSlice({
         state.loading = true
         state.error = null
       })
-      .addCase(fetchPosts.fulfilled, (state, action: PayloadAction<Post[]>) => {
+      .addCase(fetchPosts.fulfilled, (state, action) => {
         state.loading = false
-        state.posts = action.payload
+        state.posts = [...state.posts, ...action.payload]
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.loading = false
