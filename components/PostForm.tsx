@@ -50,8 +50,11 @@ export const PostForm = () => {
       formEncType="multipart/form-data"
     >
       <div className="mb-4">
-        <label className="block text-sm font-bold mb-2">Your name</label>
+        <label htmlFor="author" className="block text-sm font-bold mb-2">
+          Your name
+        </label>
         <input
+          id="author"
           type="text"
           name="author"
           className={cx(inputClasses, 'px-3 py-2')}
@@ -60,8 +63,11 @@ export const PostForm = () => {
         />
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-bold mb-2">Message</label>
+        <label htmlFor="content" className="block text-sm font-bold mb-2">
+          Message
+        </label>
         <textarea
+          id="content"
           name="content"
           className={textareaClasses}
           rows={4}
@@ -70,10 +76,11 @@ export const PostForm = () => {
         ></textarea>
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-bold mb-2">
+        <label htmlFor="avatar" className="block text-sm font-bold mb-2">
           Upload an avatar image
         </label>
         <input
+          id="avatar"
           type="file"
           name="avatar"
           accept="image/*"
