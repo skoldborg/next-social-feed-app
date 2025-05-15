@@ -4,6 +4,7 @@ import { screen } from '@testing-library/react'
 import { PostList } from '@/components/PostList'
 import * as actions from '@/app/actions'
 import * as hooks from '@/lib/hooks'
+import { mockPosts } from '@/__mocks__/post'
 
 // Mock the server action
 vi.mock('@/app/actions', async () => {
@@ -31,11 +32,6 @@ vi.mock('react-intersection-observer', () => ({
 }))
 
 describe('<PostList />', () => {
-  const mockPosts = [
-    { id: '1', author: 'John Doe', content: 'Dummy content' },
-    { id: '2', author: 'Jane Doe', content: 'Dummy content 2' },
-  ]
-
   beforeEach(() => {
     vi.clearAllMocks()
     // Set a default mock implementation to avoid unhandled rejections
