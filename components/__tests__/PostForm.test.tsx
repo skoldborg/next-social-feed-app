@@ -93,6 +93,16 @@ describe('<PostForm />', () => {
     })
   })
 
+  it('does not submit the form when required fields are empty', async () => {
+    render(<PostForm />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit/i }))
+
+    await waitFor(() => {
+      expect(mockDispatch).not.toHaveBeenCalled()
+    })
+  })
+
   it('shows an error message when submission fails', async () => {
     mockDispatch.mockRejectedValue(new Error('Failed to submit post'))
 
