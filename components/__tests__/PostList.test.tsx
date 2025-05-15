@@ -22,6 +22,14 @@ vi.mock('@/lib/hooks', () => ({
   useAppSelector: vi.fn(),
 }))
 
+// Mock useInView hook
+vi.mock('react-intersection-observer', () => ({
+  useInView: vi.fn(() => ({
+    ref: vi.fn(),
+    inView: false,
+  })),
+}))
+
 describe('<PostList />', () => {
   const mockPosts = [
     { id: '1', author: 'John Doe', content: 'Dummy content' },
@@ -46,7 +54,9 @@ describe('<PostList />', () => {
 
     // Set default for useAppDispatch
     vi.mocked(hooks.useAppDispatch).mockReturnValue(
-      vi.fn().mockResolvedValue(undefined)
+      vi.fn().mockResolvedValue({
+        payload: mockPosts,
+      })
     )
   })
 
@@ -99,12 +109,13 @@ describe('<PostList />', () => {
 
     renderWithProviders(<PostList />)
 
-    expect(screen.getByText(/We encountered an error/i)).toBeInTheDocument()
-    expect(screen.getByText(/Failed to fetch posts/)).toBeInTheDocument()
+    expect(screen.getByText(/Something went wrong!/i)).toBeInTheDocument()
   })
 
   it('dispatches fetchPosts on mount', async () => {
-    const mockDispatch = vi.fn().mockResolvedValue(undefined)
+    const mockDispatch = vi.fn().mockResolvedValue({
+      payload: mockPosts,
+    })
     vi.mocked(hooks.useAppDispatch).mockReturnValue(mockDispatch)
 
     renderWithProviders(<PostList />)
