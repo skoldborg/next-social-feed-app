@@ -9,6 +9,7 @@ import { PostListSkeleton } from './PostListSkeleton'
 import { Error } from './Error'
 import { useInView } from 'react-intersection-observer'
 import { Post } from '@/lib/types'
+import { useNewPostListener } from '@/hooks/useNewPostListener'
 
 const POSTS_PER_PAGE = 20
 
@@ -19,19 +20,25 @@ export const PostList = () => {
   const [page, setPage] = useState(1)
   const { ref, inView } = useInView()
 
+  useNewPostListener(posts)
+
   useEffect(() => {
     // Fetch initial set of posts
-    dispatch(fetchPosts({ page: 1, limit: POSTS_PER_PAGE })).then((action) => {
-      // If no more posts - stop fetching
-      if ((action.payload as Post[]).length === 0) {
-        setHasMorePosts(false)
-      }
-    })
-  }, [dispatch])
+    if (page === 1 && posts.length === 0) {
+      dispatch(fetchPosts({ page: 1, limit: POSTS_PER_PAGE })).then(
+        (action) => {
+          // If no more posts - stop fetching
+          if ((action.payload as Post[]).length === 0) {
+            setHasMorePosts(false)
+          }
+        }
+      )
+    }
+  }, [dispatch, page, posts])
 
   useEffect(() => {
     if (inView && !loading) {
-      // Fetch the next page of posts when the observer is in view
+      // Increment page number when observer is in view
       setPage((prevPage) => prevPage + 1)
     }
   }, [inView, loading])
