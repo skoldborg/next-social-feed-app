@@ -1,4 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BeSocial
+
+A demo app for displaying a social feed and allowing users to add their own posts.
+
+## Prerequisites
+
+This app is tested on [Node.js](https://nodejs.org) version 22.14.0.
+
+## Install
+
+```bash
+npm install
+# or
+yarn 
+# or
+pnpm install
+```
 
 ## Getting Started
 
@@ -10,10 +26,6 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Dev server running on [http://localhost:3000](http://localhost:3000) 
