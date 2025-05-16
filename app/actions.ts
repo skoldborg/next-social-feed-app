@@ -22,6 +22,7 @@ export type ActionResponse = {
 export async function getPostsAction({ page, limit }: Pagination) {
   try {
     const offset = (page - 1) * limit
+
     const posts = await getPosts(offset, limit)
     return posts
   } catch (error) {
@@ -46,7 +47,9 @@ export async function addPostAction(
   try {
     const author = formData.get('author') as string
     const content = formData.get('content') as string
-    const avatarFile = formData.get('avatar') as File
+    const avatar = formData.get('avatar') as File
+    const avatarFile =
+      avatar instanceof File && avatar.size > 0 ? avatar : undefined
 
     // Validate input using Zod schema
     const validationResult = PostSchema.safeParse({
@@ -54,7 +57,6 @@ export async function addPostAction(
       content,
       avatar: avatarFile,
     })
-
     if (!validationResult.success) {
       return {
         success: false,
@@ -68,7 +70,7 @@ export async function addPostAction(
     // and store the URL instead of the Base64 string
     let avatarBase64: string | undefined = undefined
     // Convert the avatar image to a Base64 string
-    if (avatarFile && avatarFile.size > 0) {
+    if (avatarFile) {
       const arrayBuffer = await avatarFile.arrayBuffer()
       const base64 = Buffer.from(arrayBuffer).toString('base64')
       avatarBase64 = `data:${avatarFile.type};base64,${base64}`
@@ -80,6 +82,7 @@ export async function addPostAction(
       content,
       avatar: avatarBase64,
     }
+
     await addPost(post)
 
     return {
