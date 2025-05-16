@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import cx from 'classnames'
 import { PostCard } from '@/components/PostCard'
 import { useAppDispatch, useAppSelector } from '@/lib/hooks'
 import { fetchPosts } from '@/lib/features/posts/postsSlice'
@@ -9,7 +10,7 @@ import { PostListSkeleton } from './PostListSkeleton'
 import { Error } from './Error'
 import { useInView } from 'react-intersection-observer'
 import { Post } from '@/lib/types'
-import { useNewPostListener } from '@/hooks/useNewPostListener'
+import { useSocketContext } from '@/contexts/socket-context'
 
 const POSTS_PER_PAGE = 20
 
@@ -20,7 +21,7 @@ export const PostList = () => {
   const [page, setPage] = useState(1)
   const { ref, inView } = useInView()
 
-  useNewPostListener(posts)
+  const { newPostIds } = useSocketContext()
 
   useEffect(() => {
     // Fetch initial set of posts
@@ -62,7 +63,12 @@ export const PostList = () => {
     <>
       <ul>
         {posts.map((post) => (
-          <li key={post.id} className="post">
+          <li
+            key={post.id}
+            className={cx('transition-all duration-500', {
+              'animate-pulse': newPostIds.has(post.id),
+            })}
+          >
             <Link href={`/posts/${post.id}`}>
               <PostCard {...post} />
             </Link>
