@@ -1,11 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export const Error = ({ error }: { error: string }) => {
-  const router = useRouter()
-
   useEffect(() => {
     // Log the error to an error reporting service
     console.error(error)
@@ -15,15 +12,9 @@ export const Error = ({ error }: { error: string }) => {
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
       <h2 className="text-2xl font-bold mb-4">Something went wrong!</h2>
       <p className="mb-6 max-w-md">
-        We encountered an error while loading this page. Please try again or
-        contact support if the problem persists.
+        We encountered an error while loading this page. Please try reloading
+        your browser or contact support if the problem persists.
       </p>
-      <button
-        onClick={() => router.refresh()}
-        className="bg-gray-300 text-zinc-800 px-4 py-2 cursor-pointer"
-      >
-        Try again
-      </button>
     </div>
   )
 }
