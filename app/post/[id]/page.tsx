@@ -18,7 +18,7 @@ export default async function SinglePost({
   const { author, content, avatar } = post
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8">
+    <div className="max-w-lg mx-auto">
       <div className="mb-8">
         <Link href="/" className="bg-gray-300 text-zinc-800 px-4 py-2">
           Back to feed

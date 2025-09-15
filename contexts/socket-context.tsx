@@ -3,8 +3,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { socket } from '@/lib/socket'
 import { Post } from '@/lib/types'
-import { useAppDispatch, useAppSelector } from '@/lib/hooks'
-import { addNewPost } from '@/lib/features/posts/postsSlice'
 import {
   addHighlight,
   isDuplicatePost,
@@ -19,15 +17,14 @@ const SocketContext = createContext<SocketContextType>({
 })
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const { posts } = useAppSelector((state) => state.posts)
-  const dispatch = useAppDispatch()
+  const posts = [] as unknown as Post[]
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const handleNewPost = (newPost: Post) => {
       if (!isDuplicatePost(posts, newPost)) {
         // Dispatch the new post to Redux
-        dispatch(addNewPost(newPost))
+        // dispatch(addNewPost(newPost))
 
         // Show a toast notification
         showNewPostToast(newPost)
@@ -41,7 +38,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       socket.off('new post', handleNewPost)
     }
-  }, [dispatch, posts])
+  }, [posts])
 
   return (
     <SocketContext.Provider value={{ newPostIds }}>

@@ -1,11 +1,10 @@
 'use client'
 
-import { ActionResponse } from '@/app/actions'
-import { addPost } from '@/lib/features/posts/postsSlice'
-import { useAppDispatch } from '@/lib/hooks'
+import { ActionResponse, addPostAction } from '@/app/actions'
 import Form from 'next/form'
 import { useActionState } from 'react'
 import cx from 'classnames'
+import { useQueryClient } from '@tanstack/react-query'
 
 const initialState: ActionResponse = {
   success: false,
@@ -14,7 +13,7 @@ const initialState: ActionResponse = {
 }
 
 export const PostForm = () => {
-  const dispatch = useAppDispatch()
+  const queryClient = useQueryClient()
 
   // Use useActionState hook for the form submission action
   const [state, formAction, isPending] = useActionState<
@@ -22,7 +21,8 @@ export const PostForm = () => {
     FormData
   >(async (prevState: ActionResponse, formData: FormData) => {
     try {
-      await dispatch(addPost(formData))
+      await addPostAction(formData)
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
 
       return {
         success: true,
