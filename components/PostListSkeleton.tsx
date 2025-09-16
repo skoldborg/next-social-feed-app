@@ -1,9 +1,9 @@
 export const PostListSkeleton = () => {
   return (
-    <div data-testid="post-list-skeleton">
-      {Array.from({ length: 10 }).map((_, index) => (
-        <div
-          className="rounded-lg border border-gray-200 bg-gray-200 text-zinc-800 shadow-sm mb-2 transition-transform"
+    <ul data-testid="post-list-skeleton">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <li
+          className="animate-pulse rounded-lg border border-gray-200 bg-gray-200 text-zinc-800 shadow-sm mb-2 transition-transform"
           key={index}
         >
           <div className="flex items-center gap-4 px-4 py-3">
@@ -14,8 +14,8 @@ export const PostListSkeleton = () => {
               <div className="w-full h-4 bg-gray-300 rounded" />
             </div>
           </div>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   )
 }

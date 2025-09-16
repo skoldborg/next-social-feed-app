@@ -1,15 +1,10 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { socket } from '@/lib/socket'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Post } from '@/lib/types'
-import { useAppDispatch, useAppSelector } from '@/lib/hooks'
-import { addNewPost } from '@/lib/features/posts/postsSlice'
-import {
-  addHighlight,
-  isDuplicatePost,
-  showNewPostToast,
-} from '@/utils/post-utils'
+import { addHighlight, showNewPostToast } from '@/utils/post-utils'
+import { socket } from '@/lib/socket'
 
 interface SocketContextType {
   newPostIds: Set<string>
@@ -19,21 +14,67 @@ const SocketContext = createContext<SocketContextType>({
 })
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const { posts } = useAppSelector((state) => state.posts)
-  const dispatch = useAppDispatch()
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set())
+  const seenPostIdsRef = useRef<Set<string>>(new Set())
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    const initialData = queryClient.getQueryData(['posts']) as
+      | { pages: Post[][] }
+      | undefined
+    if (initialData?.pages) {
+      const initialIds = new Set(
+        initialData.pages.flat().map((post: Post) => post.id)
+      )
+      seenPostIdsRef.current = initialIds
+    }
+
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event?.type !== 'updated') return
+      const query = event.query
+      if (
+        !query ||
+        query.queryKey[0] !== 'posts' ||
+        query.queryKey.length !== 1
+      )
+        return
+
+      const data = query.state.data as { pages: Post[][] } | undefined
+      if (!data?.pages) return
+
+      const allPosts = data.pages.flat()
+      const currentIds = new Set(allPosts.map((p) => p.id))
+
+      const newlyAddedPosts = allPosts.filter(
+        (p) => !seenPostIdsRef.current.has(p.id)
+      )
+
+      if (newlyAddedPosts.length > 0) {
+        newlyAddedPosts.forEach((newPost) => {
+          showNewPostToast(newPost)
+          addHighlight(setNewPostIds, newPost.id)
+        })
+      }
+
+      seenPostIdsRef.current = currentIds
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [queryClient])
 
   useEffect(() => {
     const handleNewPost = (newPost: Post) => {
-      if (!isDuplicatePost(posts, newPost)) {
-        // Dispatch the new post to Redux
-        dispatch(addNewPost(newPost))
+      if (seenPostIdsRef.current.has(newPost.id)) return
 
-        // Show a toast notification
-        showNewPostToast(newPost)
-      }
-      // Add the post ID to the highlight set
+      showNewPostToast(newPost)
       addHighlight(setNewPostIds, newPost.id)
+
+      // Mark as seen to avoid double-toast when query cache updates
+      const updated = new Set(seenPostIdsRef.current)
+      updated.add(newPost.id)
+      seenPostIdsRef.current = updated
     }
 
     socket.on('new post', handleNewPost)
@@ -41,7 +82,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       socket.off('new post', handleNewPost)
     }
-  }, [dispatch, posts])
+  }, [])
 
   return (
     <SocketContext.Provider value={{ newPostIds }}>

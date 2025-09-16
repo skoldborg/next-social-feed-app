@@ -1,11 +1,6 @@
 import { Post } from '@/lib/types'
 import toast from 'react-hot-toast'
 
-// Check if the post already exists in the Redux store
-export const isDuplicatePost = (posts: Post[], newPost: Post): boolean => {
-  return posts.some((post) => post.id === newPost.id)
-}
-
 // Show a toast notification for the new post
 export const showNewPostToast = (newPost: Post) => {
   toast(`${newPost.author} added a new post!`)

@@ -1,46 +1,27 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PostForm } from '../PostForm'
-import * as hooks from '@/lib/hooks'
-import * as actions from '@/app/actions'
-import * as postsSlice from '@/lib/features/posts/postsSlice'
-import { mockPosts } from '@/__mocks__/post'
-
-// Mock the server action
-vi.mock('@/app/actions', async () => {
-  const actual = await vi.importActual<typeof import('@/app/actions')>(
-    '@/app/actions'
-  )
-  return {
-    ...actual,
-    addPostAction: vi.fn(),
-  }
-})
+import { useAddPost } from '@/lib/hooks'
 
 vi.mock('@/lib/hooks', () => ({
-  useAppDispatch: vi.fn(),
+  useAddPost: vi.fn(),
 }))
 
-vi.mock('@/lib/features/posts/postsSlice', () => ({
-  addPost: vi.fn((formData) => ({
-    type: 'posts/addPost/fulfilled',
-    payload: formData,
-  })),
-}))
+const mockUseAddPost = vi.mocked(useAddPost)
 
 describe('<PostForm />', () => {
-  const mockDispatch = vi.fn()
+  const mutateAsync = vi.fn()
+  const reset = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Set a default mock implementation to avoid unhandled rejections
-    ;(actions.addPostAction as ReturnType<typeof vi.fn>).mockResolvedValue({
-      success: true,
-      message: 'Post added successfully',
-      post: mockPosts[0],
-    })
 
-    vi.mocked(hooks.useAppDispatch).mockReturnValue(mockDispatch)
+    mockUseAddPost.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+      reset,
+    } as unknown as ReturnType<typeof useAddPost>)
   })
 
   it('renders the form correctly', () => {
@@ -52,73 +33,86 @@ describe('<PostForm />', () => {
     expect(screen.getByRole('button', { name: /Submit/i })).toBeInTheDocument()
   })
 
-  it('submits the form and dispatches addPost', async () => {
-    const mockPost = { id: '1', author: 'John Doe', content: 'Hello, world!' }
-    mockDispatch.mockResolvedValue({
-      type: 'posts/addPost/fulfilled',
-      payload: mockPost,
-    }) // Mock addPost thunk
+  it('submits the form and calls mutateAsync with correct FormData', async () => {
+    const user = userEvent.setup()
+
+    mutateAsync.mockResolvedValue({
+      success: true,
+      message: 'Post added successfully',
+    })
 
     render(<PostForm />)
 
     // Fill out form
-    fireEvent.change(screen.getByLabelText(/Your name/i), {
-      target: { value: 'John Doe' },
-    })
-    fireEvent.change(screen.getByLabelText(/Message/i), {
-      target: { value: 'Hello, world!' },
-    })
-
     const file = new File(['avatar'], 'avatar.png', { type: 'image/png' })
-    fireEvent.change(screen.getByLabelText(/Upload an avatar image/i), {
-      target: { files: [file] },
-    })
+    await user.type(screen.getByLabelText(/Your name/i), 'John Doe')
+    await user.type(screen.getByLabelText(/Message/i), 'Hello, world!')
+    await user.upload(screen.getByLabelText(/Upload an avatar image/i), file)
 
     // Submit
-    fireEvent.click(screen.getByRole('button', { name: /Submit/i }))
+    await user.click(screen.getByRole('button', { name: /Submit/i }))
 
     await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledTimes(1)
-
-      // Verify that addPost was called with a FormData object
-      const dispatchedAction = mockDispatch.mock.calls[0][0]
-
-      // Simulate the thunk execution to verify the FormData
-      const formData = new FormData()
-      formData.append('author', 'John Doe')
-      formData.append('content', 'Hello, world!')
-      formData.append('avatar', file)
-
-      expect(dispatchedAction).toEqual(postsSlice.addPost(expect.any(FormData)))
+      expect(mutateAsync).toHaveBeenCalledWith(expect.any(FormData))
     })
+
+    // Verify the FormData contains correct values
+    const formData = mutateAsync.mock.calls[0][0]
+    expect(formData.get('author')).toBe('John Doe')
+    expect(formData.get('content')).toBe('Hello, world!')
+    expect(formData.get('avatar')).toEqual(file)
+  })
+
+  it('resets the form after successful submission', async () => {
+    const user = userEvent.setup()
+
+    mutateAsync.mockResolvedValue({
+      success: true,
+      message: 'Post added successfully',
+    })
+
+    render(<PostForm />)
+
+    await user.type(screen.getByLabelText(/Your name/i), 'John Doe')
+    await user.type(screen.getByLabelText(/Message/i), 'Hello, world!')
+    await user.click(screen.getByRole('button', { name: /Submit/i }))
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalled())
+
+    // Inputs should be cleared after success
+    expect(screen.getByLabelText(/Your name/i)).toHaveValue('')
+    expect(screen.getByLabelText(/Message/i)).toHaveValue('')
   })
 
   it('does not submit the form when required fields are empty', async () => {
+    const user = userEvent.setup()
     render(<PostForm />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Submit/i }))
+    await user.click(screen.getByRole('button', { name: /Submit/i }))
 
-    await waitFor(() => {
-      expect(mockDispatch).not.toHaveBeenCalled()
-    })
+    expect(mutateAsync).not.toHaveBeenCalled()
   })
 
   it('shows an error message when submission fails', async () => {
-    mockDispatch.mockRejectedValue(new Error('Failed to submit post'))
+    const user = userEvent.setup()
+
+    // Mock the mutation to return an error response
+    mutateAsync.mockResolvedValue({
+      success: false,
+      message: 'An error occurred while adding the post',
+      error: 'Failed to add post',
+    })
 
     render(<PostForm />)
 
-    fireEvent.change(screen.getByLabelText(/Your name/i), {
-      target: { value: 'John Doe' },
-    })
-    fireEvent.change(screen.getByLabelText(/Message/i), {
-      target: { value: 'Dummy content' },
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /Submit/i }))
+    await user.type(screen.getByLabelText(/Your name/i), 'John Doe')
+    await user.type(screen.getByLabelText(/Message/i), 'Dummy content')
+    await user.click(screen.getByRole('button', { name: /Submit/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to submit post/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/An error occurred while adding the post/i)
+      ).toBeInTheDocument()
     })
   })
 })

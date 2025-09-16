@@ -7,5 +7,5 @@ export type Post = {
 
 export type Pagination = {
   page: number
-  limit: number
+  limit?: number
 }

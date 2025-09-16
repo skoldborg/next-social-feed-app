@@ -2,6 +2,8 @@
 
 A demo app for displaying a social feed and allowing users to add their own posts.
 
+Used to experiment with socket.io, Tanstack Query, and optimistic updates in Next.js.
+
 ## Prerequisites
 
 This app is tested on [Node.js](https://nodejs.org) version 22.14.0.

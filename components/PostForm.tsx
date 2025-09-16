@@ -1,42 +1,36 @@
 'use client'
 
-import { ActionResponse } from '@/app/actions'
-import { addPost } from '@/lib/features/posts/postsSlice'
-import { useAppDispatch } from '@/lib/hooks'
-import Form from 'next/form'
-import { useActionState } from 'react'
 import cx from 'classnames'
-
-const initialState: ActionResponse = {
-  success: false,
-  message: '',
-  errors: undefined,
-}
+import Form from 'next/form'
+import { useRef, useState } from 'react'
+import { useAddPost } from '@/lib/hooks'
+import { socket } from '@/lib/socket'
 
 export const PostForm = () => {
-  const dispatch = useAppDispatch()
+  const { mutateAsync, isPending, reset } = useAddPost()
+  const [error, setError] = useState<string>('')
+  const formRef = useRef<HTMLFormElement | null>(null)
 
-  // Use useActionState hook for the form submission action
-  const [state, formAction, isPending] = useActionState<
-    ActionResponse,
-    FormData
-  >(async (prevState: ActionResponse, formData: FormData) => {
-    try {
-      await dispatch(addPost(formData))
+  async function onSubmit(formData: FormData) {
+    setError('')
+    const result = await mutateAsync(formData)
 
-      return {
-        success: true,
-        message: '',
-        error: undefined,
-      }
-    } catch (err) {
-      return {
-        success: false,
-        message: (err as Error).message || 'An error occurred',
-        errors: undefined,
-      }
+    if (!result.success) {
+      setError(result.message || 'An error occurred')
+      return
     }
-  }, initialState)
+
+    // Broadcast the new post to other clients
+    if (result.post) {
+      socket.emit('new post', result.post)
+    }
+
+    // Clear the form after successful submit
+    if (formRef.current) {
+      formRef.current.reset()
+    }
+    reset()
+  }
 
   const inputClasses =
     'flex h-10 w-full  bg-white text-zinc-800 text-sm disabled:cursor-not-allowed disabled:opacity-50'
@@ -45,7 +39,8 @@ export const PostForm = () => {
 
   return (
     <Form
-      action={formAction}
+      ref={formRef}
+      action={onSubmit}
       className="p-2 max-w-xs"
       formEncType="multipart/form-data"
     >
@@ -100,9 +95,11 @@ export const PostForm = () => {
           Submit
         </button>
 
-        {!state.success && state.message && (
+        {error && (
           <div className="flex items-center">
-            <p className="text-sm text-wrap text-red-500">{state.message}</p>
+            <p aria-live="polite" className="text-sm text-wrap text-red-500">
+              {error}
+            </p>
           </div>
         )}
       </div>

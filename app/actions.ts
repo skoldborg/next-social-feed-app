@@ -19,7 +19,12 @@ export type ActionResponse = {
   error?: string
 }
 
-export async function getPostsAction({ page, limit }: Pagination) {
+const POSTS_PER_PAGE = 20
+
+export async function getPostsAction({
+  page,
+  limit = POSTS_PER_PAGE,
+}: Pagination) {
   try {
     const offset = (page - 1) * limit
 
@@ -65,9 +70,7 @@ export async function addPostAction(
       }
     }
 
-    // Base64 used for simplicity
-    // In a real-world application, I'd upload the file to a server or cloud storage
-    // and store the URL instead of the Base64 string
+    // Base64 used for demo purposes
     let avatarBase64: string | undefined = undefined
     // Convert the avatar image to a Base64 string
     if (avatarFile) {
