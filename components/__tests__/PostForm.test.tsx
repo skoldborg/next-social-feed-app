@@ -2,34 +2,26 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PostForm } from '../PostForm'
+import { useAddPost } from '@/lib/hooks'
 
-import { useQueryClient } from '@tanstack/react-query'
-import { addPostAction } from '@/app/actions'
-
-// Mock the server action
-vi.mock('@/app/actions', () => ({
-  addPostAction: vi.fn(),
+vi.mock('@/lib/hooks', () => ({
+  useAddPost: vi.fn(),
 }))
 
-vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: vi.fn(),
-}))
-
-const mockAddPostAction = vi.mocked(addPostAction)
-const mockUseQueryClient = vi.mocked(useQueryClient)
+const mockUseAddPost = vi.mocked(useAddPost)
 
 describe('<PostForm />', () => {
-  const mockInvalidateQueries = vi.fn()
+  const mutateAsync = vi.fn()
+  const reset = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockUseQueryClient.mockReturnValue({
-      invalidateQueries: mockInvalidateQueries,
-      getQueryData: vi.fn(),
-      setQueryData: vi.fn(),
-      refetchQueries: vi.fn(),
-    } as unknown as ReturnType<typeof useQueryClient>)
+    mockUseAddPost.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+      reset,
+    } as unknown as ReturnType<typeof useAddPost>)
   })
 
   it('renders the form correctly', () => {
@@ -41,14 +33,12 @@ describe('<PostForm />', () => {
     expect(screen.getByRole('button', { name: /Submit/i })).toBeInTheDocument()
   })
 
-  it('submits the form and calls addPostAction with correct data', async () => {
+  it('submits the form and calls mutateAsync with correct FormData', async () => {
     const user = userEvent.setup()
-    const mockPost = { id: '1', author: 'John Doe', content: 'Hello, world!' }
 
-    mockAddPostAction.mockResolvedValue({
+    mutateAsync.mockResolvedValue({
       success: true,
       message: 'Post added successfully',
-      post: mockPost,
     })
 
     render(<PostForm />)
@@ -63,23 +53,22 @@ describe('<PostForm />', () => {
     await user.click(screen.getByRole('button', { name: /Submit/i }))
 
     await waitFor(() => {
-      expect(mockAddPostAction).toHaveBeenCalledWith(expect.any(FormData))
+      expect(mutateAsync).toHaveBeenCalledWith(expect.any(FormData))
     })
 
     // Verify the FormData contains correct values
-    const formData = mockAddPostAction.mock.calls[0][0]
+    const formData = mutateAsync.mock.calls[0][0]
     expect(formData.get('author')).toBe('John Doe')
     expect(formData.get('content')).toBe('Hello, world!')
     expect(formData.get('avatar')).toEqual(file)
   })
 
-  it('invalidates queries after successful submission', async () => {
+  it('resets the form after successful submission', async () => {
     const user = userEvent.setup()
 
-    mockAddPostAction.mockResolvedValue({
+    mutateAsync.mockResolvedValue({
       success: true,
       message: 'Post added successfully',
-      post: { id: '1', author: 'John Doe', content: 'Hello, world!' },
     })
 
     render(<PostForm />)
@@ -88,13 +77,11 @@ describe('<PostForm />', () => {
     await user.type(screen.getByLabelText(/Message/i), 'Hello, world!')
     await user.click(screen.getByRole('button', { name: /Submit/i }))
 
-    await waitFor(() => {
-      expect(mockAddPostAction).toHaveBeenCalled()
-    })
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalled())
 
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['posts'],
-    })
+    // Inputs should be cleared after success
+    expect(screen.getByLabelText(/Your name/i)).toHaveValue('')
+    expect(screen.getByLabelText(/Message/i)).toHaveValue('')
   })
 
   it('does not submit the form when required fields are empty', async () => {
@@ -103,14 +90,14 @@ describe('<PostForm />', () => {
 
     await user.click(screen.getByRole('button', { name: /Submit/i }))
 
-    expect(mockAddPostAction).not.toHaveBeenCalled()
+    expect(mutateAsync).not.toHaveBeenCalled()
   })
 
   it('shows an error message when submission fails', async () => {
     const user = userEvent.setup()
 
-    // Mock the server action to return an error
-    mockAddPostAction.mockResolvedValue({
+    // Mock the mutation to return an error response
+    mutateAsync.mockResolvedValue({
       success: false,
       message: 'An error occurred while adding the post',
       error: 'Failed to add post',
@@ -127,8 +114,5 @@ describe('<PostForm />', () => {
         screen.getByText(/An error occurred while adding the post/i)
       ).toBeInTheDocument()
     })
-
-    // Verify queries were NOT invalidated on failure
-    expect(mockInvalidateQueries).not.toHaveBeenCalled()
   })
 })

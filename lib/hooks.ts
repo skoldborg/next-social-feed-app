@@ -1,6 +1,10 @@
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 
-import { addPostAction, getPostsAction } from '@/app/actions'
+import { ActionResponse, addPostAction, getPostsAction } from '@/app/actions'
 import { Post } from './types'
 
 function useGetPosts(initialData: Post[]) {
@@ -22,15 +26,13 @@ function useGetPosts(initialData: Post[]) {
 }
 
 function useAddPost() {
-  return useMutation({
-    mutationFn: async (formData: FormData) => {
-      return await addPostAction(formData)
-    },
-    onError: (err) => {
-      return {
-        success: false,
-        message: (err as Error).message || 'An error occurred',
-        errors: undefined,
+  const queryClient = useQueryClient()
+
+  return useMutation<ActionResponse, Error, FormData>({
+    mutationFn: async (formData: FormData) => addPostAction(formData),
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['posts'] })
       }
     },
   })
