@@ -45,7 +45,9 @@ export function useAddPost() {
 export function usePostsRealtime() {
   const queryClient = useQueryClient()
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set())
+  // Keep track of post ids in the query cache
   const seenPostIdsRef = useRef<Set<string>>(new Set())
+  // Keep track of post ids that have been notified
   const notifiedIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
@@ -96,8 +98,8 @@ export function usePostsRealtime() {
           if (!existing?.pages || existing.pages.length === 0) {
             return { pages: [[newPost]], pageParams: [1] }
           }
-          const pages = existing.pages.map((p) => [...p])
-          pages[0] = [newPost, ...pages[0]]
+          const pages = existing.pages.slice()
+          pages[0] = [newPost, ...(pages[0] ?? [])]
           return { ...existing, pages }
         }
       )
@@ -105,12 +107,12 @@ export function usePostsRealtime() {
       showNewPostToast(newPost)
       addHighlight(setNewPostIds, newPost.id)
 
-      // Mark as seen to avoid double-toast when query cache updates
+      // Mark as seen to avoid clashes with the query cache
       const updated = new Set(seenPostIdsRef.current)
       updated.add(newPost.id)
       seenPostIdsRef.current = updated
 
-      // Prevent duplicate toasts for the same post id
+      // Prevent duplicate toasts for the same post id in this session
       const notified = new Set(notifiedIdsRef.current)
       notified.add(newPost.id)
       notifiedIdsRef.current = notified

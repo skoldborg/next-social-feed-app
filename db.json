@@ -1,6 +1,16 @@
 {
   "posts": [
     {
+      "id": "c02bbcf7-cef8-4e00-9bb6-f20e25c3fa5b",
+      "author": "dfdff",
+      "content": "dffdf"
+    },
+    {
+      "id": "7ccbe982-9f4e-4ce9-a1bf-fe09ee882591",
+      "author": "Testing",
+      "content": "working"
+    },
+    {
       "content": "In the ruins of a forgotten world, the last remnants of humanity cling to survival. Their only hope lies in the hands of a lone scavenger who remembers the ancient codes of the old tech.",
       "author": "Kai Mercer",
       "avatar": "http://placebeard.it/80/80?random=1",
