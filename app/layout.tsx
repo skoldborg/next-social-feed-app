@@ -23,7 +23,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
         <Providers>
-          {/* Reset SocketProvider when done w React Query */}
           <Toaster position="top-center" />
           <main className="py-4 px-8 md:py-8 md:px-12">{children}</main>
         </Providers>

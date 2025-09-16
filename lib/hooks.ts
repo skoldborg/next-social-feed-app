@@ -3,11 +3,14 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
 
 import { ActionResponse, addPostAction, getPostsAction } from '@/app/actions'
+import { socket } from '@/lib/socket'
+import { addHighlight, showNewPostToast } from '@/utils/post-utils'
 import { Post } from './types'
 
-function useGetPosts(initialData: Post[]) {
+export function useGetPosts(initialData: Post[]) {
   return useInfiniteQuery<Post[]>({
     queryKey: ['posts'],
     queryFn: async ({ pageParam = 1 }) => {
@@ -25,7 +28,7 @@ function useGetPosts(initialData: Post[]) {
   })
 }
 
-function useAddPost() {
+export function useAddPost() {
   const queryClient = useQueryClient()
 
   return useMutation<ActionResponse, Error, FormData>({
@@ -38,4 +41,86 @@ function useAddPost() {
   })
 }
 
-export { useAddPost, useGetPosts }
+// Realtime posts via socket.io, updating the query cache and exposing highlights
+export function usePostsRealtime() {
+  const queryClient = useQueryClient()
+  const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set())
+  const seenPostIdsRef = useRef<Set<string>>(new Set())
+  const notifiedIdsRef = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    const initialData = queryClient.getQueryData(['posts']) as
+      | { pages: Post[][] }
+      | undefined
+    if (initialData?.pages) {
+      const initialIds = new Set(
+        initialData.pages.flat().map((post: Post) => post.id)
+      )
+      seenPostIdsRef.current = initialIds
+    }
+
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event?.type !== 'updated') return
+
+      const { query } = event
+      if (
+        !query ||
+        query.queryKey[0] !== 'posts' ||
+        query.queryKey.length !== 1
+      )
+        return
+
+      const data = query.state.data as { pages: Post[][] } | undefined
+      if (!data?.pages) return
+
+      const allPosts = data.pages.flat()
+      const currentIds = new Set(allPosts.map((p) => p.id))
+
+      seenPostIdsRef.current = currentIds
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [queryClient])
+
+  useEffect(() => {
+    const handleNewPost = (newPost: Post) => {
+      if (seenPostIdsRef.current.has(newPost.id)) return
+      if (notifiedIdsRef.current.has(newPost.id)) return
+
+      // Optimistically insert the new post at the top of the first page
+      queryClient.setQueryData(
+        ['posts'],
+        (existing: { pages: Post[][] } | undefined) => {
+          if (!existing?.pages || existing.pages.length === 0) {
+            return { pages: [[newPost]], pageParams: [1] }
+          }
+          const pages = existing.pages.map((p) => [...p])
+          pages[0] = [newPost, ...pages[0]]
+          return { ...existing, pages }
+        }
+      )
+
+      showNewPostToast(newPost)
+      addHighlight(setNewPostIds, newPost.id)
+
+      // Mark as seen to avoid double-toast when query cache updates
+      const updated = new Set(seenPostIdsRef.current)
+      updated.add(newPost.id)
+      seenPostIdsRef.current = updated
+
+      // Prevent duplicate toasts for the same post id
+      const notified = new Set(notifiedIdsRef.current)
+      notified.add(newPost.id)
+      notifiedIdsRef.current = notified
+    }
+
+    socket.on('new post', handleNewPost)
+    return () => {
+      socket.off('new post', handleNewPost)
+    }
+  }, [queryClient])
+
+  return { newPostIds }
+}

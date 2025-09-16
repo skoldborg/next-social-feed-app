@@ -6,8 +6,7 @@ import cx from 'classnames'
 import { PostCard } from '@/components/PostCard'
 import { useInView } from 'react-intersection-observer'
 import { Post } from '@/lib/types'
-import { useSocketContext } from '@/contexts/socket-context'
-import { useGetPosts } from '@/lib/hooks'
+import { useGetPosts, usePostsRealtime } from '@/lib/hooks'
 import { PostListSkeleton } from './PostListSkeleton'
 
 export const PostList = ({ initialPosts }: { initialPosts: Post[] }) => {
@@ -15,7 +14,7 @@ export const PostList = ({ initialPosts }: { initialPosts: Post[] }) => {
     useGetPosts(initialPosts)
   const { ref, inView } = useInView()
 
-  const { newPostIds } = useSocketContext()
+  const { newPostIds } = usePostsRealtime()
 
   useEffect(() => {
     if (inView) {

@@ -4,6 +4,7 @@ import cx from 'classnames'
 import Form from 'next/form'
 import { useRef, useState } from 'react'
 import { useAddPost } from '@/lib/hooks'
+import { socket } from '@/lib/socket'
 
 export const PostForm = () => {
   const { mutateAsync, isPending, reset } = useAddPost()
@@ -17,6 +18,11 @@ export const PostForm = () => {
     if (!result.success) {
       setError(result.message || 'An error occurred')
       return
+    }
+
+    // Broadcast the new post to other clients
+    if (result.post) {
+      socket.emit('new post', result.post)
     }
 
     // Clear the form after successful submit
