@@ -21,13 +21,18 @@ export const PostForm = () => {
     FormData
   >(async (prevState: ActionResponse, formData: FormData) => {
     try {
-      await addPostAction(formData)
+      const result = await addPostAction(formData)
+
+      if (!result.success) {
+        return result
+      }
+
+      // Only invalidate cache on success
       queryClient.invalidateQueries({ queryKey: ['posts'] })
 
       return {
-        success: true,
-        message: '',
-        error: undefined,
+        ...result,
+        errors: undefined,
       }
     } catch (err) {
       return {
@@ -102,7 +107,9 @@ export const PostForm = () => {
 
         {!state.success && state.message && (
           <div className="flex items-center">
-            <p className="text-sm text-wrap text-red-500">{state.message}</p>
+            <p aria-live="polite" className="text-sm text-wrap text-red-500">
+              {state.message}
+            </p>
           </div>
         )}
       </div>

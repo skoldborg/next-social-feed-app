@@ -29,7 +29,7 @@ describe('<PostForm />', () => {
       getQueryData: vi.fn(),
       setQueryData: vi.fn(),
       refetchQueries: vi.fn(),
-    } as any)
+    } as unknown as ReturnType<typeof useQueryClient>)
   })
 
   it('renders the form correctly', () => {
@@ -123,7 +123,9 @@ describe('<PostForm />', () => {
     await user.click(screen.getByRole('button', { name: /Submit/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to add post/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/An error occurred while adding the post/i)
+      ).toBeInTheDocument()
     })
 
     // Verify queries were NOT invalidated on failure
